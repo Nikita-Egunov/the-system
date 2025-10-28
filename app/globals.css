@@ -1,26 +1,128 @@
 @import "tailwindcss";
+@plugin "tailwind-scrollbar";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
+  body {
+    @apply bg-gray-950;
+  }
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --color-primary: #1f2937;
+    --color-secondary: #374151;
+    --color-accent: #6b7280;
+    --color-background: #111827;
+    --color-text: #f3f4f6;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+
+  .scrollbar-thumb-rounded {
+    scrollbar-color: #4b5563 #1f2937;
+  }
+
+  .scrollbar-thumb-rounded::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-thumb-rounded::-webkit-scrollbar-track {
+    background: #1f2937;
+    border-radius: 10px;
+  }
+
+  .scrollbar-thumb-rounded::-webkit-scrollbar-thumb {
+    background-color: #4b5563;
+    border-radius: 10px;
+    border: 2px solid #1f2937;
+  }
+
+  .scrollbar-thumb-rounded::-webkit-scrollbar-thumb:hover {
+    background-color: #6b7280;
+  }
 }
+
+@layer components {
+  .datePicker-me {
+    @apply w-full! p-3! rounded-lg! border! border-gray-600! text-gray-200! focus:ring-2! focus:ring-indigo-500! focus:border-indigo-500! scrollbar-thin!;
+  }
+
+  .react-datepicker {
+    @apply bg-gray-800! border! border-gray-600! rounded-lg! shadow-xl!;
+  }
+
+  .react-datepicker__header {
+    @apply bg-gray-700! border-b! border-gray-600!;
+  }
+
+  .react-datepicker__day {
+    @apply text-gray-200! rounded! transition-colors!;
+  }
+
+  .react-datepicker__day:hover {
+    @apply bg-gray-600! text-white!;
+  }
+
+  .react-datepicker__day--selected {
+    @apply bg-indigo-600! text-white!;
+  }
+
+  .react-datepicker__day--keyboard-selected {
+    @apply bg-indigo-500! text-white!;
+  }
+
+  .react-datepicker__day--today {
+    @apply bg-gray-600! text-white!;
+  }
+
+  .react-datepicker__current-month {
+    @apply text-gray-200! font-medium!;
+  }
+
+  .react-datepicker__day-name {
+    @apply text-gray-400! font-normal!;
+  }
+
+  .react-datepicker__navigation {
+    @apply top-2!;
+  }
+
+  .react-datepicker__navigation-icon:before {
+    @apply border-gray-300!;
+  }
+
+  .react-datepicker__navigation:hover .react-datepicker__navigation-icon:before {
+    @apply border-gray-100!;
+  }
+
+  .react-datepicker__time-container {
+    @apply border-l! border-gray-600!;
+  }
+
+  .react-datepicker__time {
+    @apply bg-gray-800!;
+  }
+  .react-datepicker__time-list {
+    @apply scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-700;
+  }
+
+  .react-datepicker__time-list-item {
+    @apply text-gray-200! transition-colors!;
+  }
+
+  .react-datepicker__time-list-item:hover {
+    @apply bg-gray-700!;
+  }
+
+  .react-datepicker__time-list-item--selected {
+    @apply bg-indigo-600! text-white!;
+  }
+
+  .react-datepicker-time__header {
+    @apply text-gray-200!;
+  }
+}
+
+@import "../node_modules/react-datepicker/dist/react-datepicker.css";
