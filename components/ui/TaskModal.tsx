@@ -17,17 +17,29 @@ export default function TaskModal({ isOpen, onClose, onAddTask }: TaskModalProps
 
   const handleSubmit = (e: React.FormEvent) => {
     console.log('handleSubmit called');
-    if (!deadline) return
     e.preventDefault();
     if (taskText.trim()) {
-      onAddTask(taskText, columnType, deadline);
+      let taskDeadline: Date;
+
+      if (columnType === 'daily') {
+        const now = new Date();
+        const endOfDayLocal = new Date(now);
+        endOfDayLocal.setHours(23, 59, 59, 999);
+        taskDeadline = endOfDayLocal
+      } else if (deadline) {
+        taskDeadline = deadline;
+      } else {
+        return;
+      }
+
+      onAddTask(taskText, columnType, taskDeadline);
       setTaskText('');
       setDeadline(null);
       setColumnType('short');
       onClose();
     }
-  };  
-  
+  };
+
 
   if (!isOpen) return null;
 
@@ -70,57 +82,59 @@ export default function TaskModal({ isOpen, onClose, onAddTask }: TaskModalProps
               />
             </div>
 
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-300 mb-1">
-                Срок выполнения
-              </label>
-              <DatePicker
-                selected={deadline}
-                onChange={(date: Date | null) => setDeadline(date)}
-                showTimeSelect
-                timeFormat="HH:mm"
-                timeIntervals={15}
-                dateFormat="Pp"
-                className="datePicker-me"
-                wrapperClassName="w-full"
-                calendarClassName="datePicker-me__calendar"
-                popperClassName="react-datepicker__popper"
-                popperPlacement="bottom-start"
-                placeholderText="Выберите дату и время"
-                required
-                minDate={new Date()}
-                filterTime={(time) => {
-                  const now = new Date();
-                  const selectedDate = deadline || new Date();
+            {columnType !== 'daily' && (
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Срок выполнения
+                </label>
+                <DatePicker
+                  selected={deadline}
+                  onChange={(date: Date | null) => setDeadline(date)}
+                  showTimeSelect
+                  timeFormat="HH:mm"
+                  timeIntervals={15}
+                  dateFormat="Pp"
+                  className="datePicker-me"
+                  wrapperClassName="w-full"
+                  calendarClassName="datePicker-me__calendar"
+                  popperClassName="react-datepicker__popper"
+                  popperPlacement="bottom-start"
+                  placeholderText="Выберите дату и время"
+                  required
+                  minDate={new Date()}
+                  filterTime={(time) => {
+                    const now = new Date();
+                    const selectedDate = deadline || new Date();
 
-                  // Check if the time is in the past (including hours and minutes)
-                  const selectedDateTime = new Date(selectedDate);
-                  selectedDateTime.setHours(time.getHours(), time.getMinutes(), 0, 0);
+                    // Check if the time is in the past (including hours and minutes)
+                    const selectedDateTime = new Date(selectedDate);
+                    selectedDateTime.setHours(time.getHours(), time.getMinutes(), 0, 0);
 
-                  if (selectedDateTime < now) {
-                    return false;
-                  }
+                    if (selectedDateTime < now) {
+                      return false;
+                    }
 
-                  // Get all tasks from localStorage
-                  const savedData = localStorage.getItem('todoTasks');
-                  if (!savedData) return true;
+                    // Get all tasks from localStorage
+                    const savedData = localStorage.getItem('todoTasks');
+                    if (!savedData) return true;
 
-                  const parsedData: { columns: TaskColumnData[] } = JSON.parse(savedData);
-                  const allTasks = parsedData.columns.flatMap(col => col.tasks);
+                    const parsedData: { columns: TaskColumnData[] } = JSON.parse(savedData);
+                    const allTasks = parsedData.columns.flatMap(col => col.tasks);
 
-                  // Check if any task has the same time slot
-                  return !allTasks.some(task => {
-                    const taskDeadline = new Date(task.deadline);
-                    // Compare both date and time (hours/minutes)
-                    return taskDeadline.getFullYear() === selectedDateTime.getFullYear() &&
-                           taskDeadline.getMonth() === selectedDateTime.getMonth() &&
-                           taskDeadline.getDate() === selectedDateTime.getDate() &&
-                           taskDeadline.getHours() === selectedDateTime.getHours() &&
-                           taskDeadline.getMinutes() === selectedDateTime.getMinutes();
-                  });
-                }}
-              />
-            </div>
+                    // Check if any task has the same time slot
+                    return !allTasks.some(task => {
+                      const taskDeadline = new Date(task.deadline);
+                      // Compare both date and time (hours/minutes)
+                      return taskDeadline.getFullYear() === selectedDateTime.getFullYear() &&
+                        taskDeadline.getMonth() === selectedDateTime.getMonth() &&
+                        taskDeadline.getDate() === selectedDateTime.getDate() &&
+                        taskDeadline.getHours() === selectedDateTime.getHours() &&
+                        taskDeadline.getMinutes() === selectedDateTime.getMinutes();
+                    });
+                  }}
+                />
+              </div>
+            )}
 
             <div className="flex justify-end space-x-3">
               <button

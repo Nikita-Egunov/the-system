@@ -117,7 +117,7 @@ export default function TasksContainer() {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
-  // Расчет прогресса времени до конца дня
+  // Расчет прогресса времени до конца дня и сброс задач в начале нового дня
   useEffect(() => {
     const updateTimeProgress = () => {
       const now = new Date();
@@ -127,9 +127,16 @@ export default function TasksContainer() {
       const totalDayTimeMs = 24 * 60 * 60 * 1000;
       const progress = 100 - (remainingTimeMs / totalDayTimeMs) * 100;
       setTimeProgress(Math.min(100, Math.max(0, progress)));
+    };
 
-      // Если день закончился, удаляем выполненные задачи и сбрасываем статус дэйликов
-      if (progress >= 100) {
+    // Проверка на начало нового дня
+    const checkForNewDay = () => {
+      const now = new Date();
+      const lastCheckDate = localStorage.getItem('lastCheckDate');
+
+      // Если это первый запуск или день изменился
+      if (!lastCheckDate || new Date(lastCheckDate).getDate() !== now.getDate()) {
+        // Сбрасываем статус дэйликов и удаляем выполненные задачи
         setColumns(prevColumns =>
           prevColumns.map(column => ({
             ...column,
@@ -138,10 +145,15 @@ export default function TasksContainer() {
               : column.tasks.filter(task => task.status !== 'done')
           }))
         );
+
+        // Сохраняем текущую дату для следующей проверки
+        localStorage.setItem('lastCheckDate', now.toISOString());
       }
     };
 
     updateTimeProgress();
+    checkForNewDay();
+
     const intervalId = setInterval(updateTimeProgress, 1000);
     return () => clearInterval(intervalId);
   }, []);
@@ -173,17 +185,32 @@ export default function TasksContainer() {
           : column
       )
     );
-
     const oldTasksProgress = JSON.parse(localStorage.getItem('tasksProgress') || '[]') as TaskProgress[] | [];
 
-    localStorage.setItem('tasksProgress', JSON.stringify([
-      ...oldTasksProgress, {
-        id: newTask.id,
-        progress: 0
-      }
-    ]))
+    if (columnType === 'daily') {
+      localStorage.setItem('tasksProgress', JSON.stringify([
+        ...oldTasksProgress, {
+          id: newTask.id,
+          progress: 0
+        }
+      ]))
 
-    localStorage.setItem(`taskCreatedAt_${newTask.id}`, new Date().toISOString())
+      const dayStart = new Date();
+
+      // Устанавливаем начало дня (00:00:00.000)
+      dayStart.setUTCHours(0, 0, 0, 0);
+
+      localStorage.setItem(`taskCreatedAt_${newTask.id}`, dayStart.toISOString())
+    } else {
+      localStorage.setItem('tasksProgress', JSON.stringify([
+        ...oldTasksProgress, {
+          id: newTask.id,
+          progress: 0
+        }
+      ]))
+
+      localStorage.setItem(`taskCreatedAt_${newTask.id}`, new Date().toISOString())
+    }
   };
 
   // Удаление задачи
