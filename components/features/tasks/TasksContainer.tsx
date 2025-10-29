@@ -8,6 +8,7 @@ import TaskColumn from './TaskColumn';
 import AddTaskButton from '@/components/ui/AddTaskButton';
 import TaskModal from '@/components/ui/TaskModal';
 import StatsSection from './StatsSection';
+import Link from 'next/link';
 
 const initialTasks: TaskColumnData[] = [
   {
@@ -371,7 +372,14 @@ export default function TasksContainer() {
   return (
     <div className="relative">
       <section className="bg-gray-800/60 backdrop-blur-sm p-6 rounded-xl shadow-lg border border-gray-700">
-        <h2 className="text-2xl font-semibold text-indigo-200 mb-6 pb-2 border-b border-gray-700">Мои задачи</h2>
+        <div className='flex justify-between items-center mb-6'>
+          <h2 className="text-2xl font-semibold text-indigo-200 pb-2 border-b border-gray-700">Мои задачи</h2>
+          <Link href={'/settings'} className='flex flex-col justify-between h-3.5'>
+            <span className='border-b border-gray-300 w-4.5'></span>
+            <span className='border-b border-gray-300 w-4.5'></span>
+            <span className='border-t border-gray-300 w-4.5'></span>
+          </Link>
+        </div>
 
         {/* Секция со статистикой */}
         <StatsSection

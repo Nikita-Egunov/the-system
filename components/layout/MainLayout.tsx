@@ -10,7 +10,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
       <header className="bg-gray-800 p-6 shadow-lg">
         <h1 className="text-3xl font-bold tracking-wide text-indigo-300">Список дел</h1>
       </header>
-      <main className="flex-grow p-6 max-w-6xl mx-auto w-full">
+      <main className="grow p-6 max-w-6xl mx-auto w-full">
         {children}
       </main>
       <footer className="bg-gray-800 text-gray-400 p-4 text-center text-sm">
