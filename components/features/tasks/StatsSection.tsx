@@ -14,6 +14,8 @@ interface StatsSectionProps {
 export default function StatsSection({ totalTasks, completedTasks, totalShortTasks, completedShortTasks, totalOverdueTasks, overdueTasks, className = '' }: StatsSectionProps) {
   const [timeProgress, setTimeProgress] = useState(0);
   const [remainingTime, setRemainingTime] = useState(0);
+  const [yearProgress, setYearProgress] = useState(0);
+  const [remainingYearTime, setRemainingYearTime] = useState(0);
 
   // Рассчитываем прогресс времени (сколько прошло с начала дня)
   useEffect(() => {
@@ -31,6 +33,17 @@ export default function StatsSection({ totalTasks, completedTasks, totalShortTas
 
       setTimeProgress(Math.round(progress));
       setRemainingTime(remainingMs);
+
+      // Рассчитываем прогресс года
+      const startOfYear = new Date(now.getFullYear(), 0, 1);
+      const endOfYear = new Date(now.getFullYear(), 11, 31, 23, 59, 59, 999);
+      const totalYearMs = endOfYear.getTime() - startOfYear.getTime();
+      const elapsedYearMs = now.getTime() - startOfYear.getTime();
+      const yearProgress = (elapsedYearMs / totalYearMs) * 100;
+      const remainingYearMs = endOfYear.getTime() - now.getTime();
+
+      setYearProgress(Math.round(yearProgress));
+      setRemainingYearTime(remainingYearMs);
     };
 
     updateTimeProgress();
@@ -60,7 +73,11 @@ export default function StatsSection({ totalTasks, completedTasks, totalShortTas
     const seconds = Math.floor(ms / 1000) % 60;
     const minutes = Math.floor(ms / (1000 * 60)) % 60;
     const hours = Math.floor(ms / (1000 * 60 * 60));
+    const days = Math.floor(ms / (1000 * 60 * 60 * 24));
 
+    if (days > 0) {
+      return `${days}д ${hours}ч ${minutes}м`;
+    }
     return `${hours}ч ${minutes}м ${seconds}с`;
   };
 
@@ -87,6 +104,11 @@ export default function StatsSection({ totalTasks, completedTasks, totalShortTas
                 value: timeProgress,
                 color: getDynamicColor(timeProgress),
                 strokeWidth: 6
+              },
+              {
+                value: yearProgress,
+                color: getDynamicColor(yearProgress), // purple-500
+                strokeWidth: 4
               }
             ]}
             size={140}
@@ -94,11 +116,13 @@ export default function StatsSection({ totalTasks, completedTasks, totalShortTas
             showTimer={true}
             timerValue={formatRemainingTime(remainingTime)}
           />
-          <div className="mt-4 text-center">
-            <h3 className="text-gray-300 font-medium">День</h3>
-            <p className="text-gray-400 text-sm">
-              Осталось: {formatRemainingTime(remainingTime)}
-            </p>
+          <div className="mt-4 text-center flex items-center gap-4.5">
+            <div className='flex flex-col justify-center'>
+              <h3 className="text-gray-300 font-medium">День</h3>
+              <p className="text-gray-400 text-sm">
+                Осталось: {formatRemainingTime(remainingTime)}
+              </p>
+            </div>
           </div>
         </div>
 

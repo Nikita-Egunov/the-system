@@ -14,6 +14,11 @@ export interface DeletedTask {
   deadline: Date;
 }
 
+export interface TaskProgress {
+  id: string;
+  progress: number;
+}
+
 export interface TaskColumnData {
   id: string;
   title: string;
@@ -24,4 +29,5 @@ export interface TaskColumnData {
 export interface LocalStorageData {
   columns: TaskColumnData[];
   deletedTasks: DeletedTask[];
+  tasksProgress: TaskProgress[];
 }

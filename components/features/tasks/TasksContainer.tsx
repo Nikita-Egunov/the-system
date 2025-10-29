@@ -3,13 +3,19 @@
 import React, { useState, useEffect } from 'react';
 import ProgressBar from '@/components/ui/ProgressBar';
 import { v4 as uuidv4 } from 'uuid';
-import { Task, TaskColumnData, DeletedTask, LocalStorageData } from '@/lib/types';
+import { Task, TaskColumnData, DeletedTask, LocalStorageData, TaskProgress } from '@/lib/types';
 import TaskColumn from './TaskColumn';
 import AddTaskButton from '@/components/ui/AddTaskButton';
 import TaskModal from '@/components/ui/TaskModal';
 import StatsSection from './StatsSection';
 
 const initialTasks: TaskColumnData[] = [
+  {
+    id: "4",
+    title: 'Дэйлики',
+    type: 'daily',
+    tasks: []
+  },
   {
     id: "1",
     title: 'Короткие таски',
@@ -37,18 +43,13 @@ const initialTasks: TaskColumnData[] = [
       // { id: "6", text: 'Изучить новый фреймворк и создать тестовый проект', status: 'idle', deadline: new Date('2026-01-30') }
     ]
   },
-  {
-    id: "4",
-    title: 'Дэйлики',
-    type: 'daily',
-    tasks: []
-  }
 ];
 
 export default function TasksContainer() {
   const [columns, setColumns] = useState<TaskColumnData[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [deletedTasks, setDeletedTasks] = useState<DeletedTask[]>([]);
+  const [tasksProgress, setTasksProgress] = useState<TaskProgress[]>([]);
   const [timeProgress, setTimeProgress] = useState<number>(0);
 
   // Загрузка данных при монтировании
@@ -77,6 +78,7 @@ export default function TasksContainer() {
         console.log('🎯 Setting columns from localStorage');
         setColumns(data.columns);
         setDeletedTasks(data.deletedTasks || []);
+        setTasksProgress(data.tasksProgress || []);
       } else {
         console.log('🎯 Setting default columns');
         setColumns(initialTasks);
@@ -97,13 +99,13 @@ export default function TasksContainer() {
 
     const saveData = () => {
       console.log('💾 Saving to localStorage');
-      const dataToSave: LocalStorageData = { columns, deletedTasks };
+      const dataToSave: LocalStorageData = { columns, deletedTasks, tasksProgress };
       localStorage.setItem('todoTasks', JSON.stringify(dataToSave));
     };
 
     const timer = setTimeout(saveData, 500);
     return () => clearTimeout(timer);
-  }, [columns, deletedTasks]);
+  }, [columns, deletedTasks, tasksProgress]);
 
   // Форматирование времени в ЧЧ:ММ:СС
   const formatTime = (ms: number) => {
@@ -125,7 +127,7 @@ export default function TasksContainer() {
       const progress = 100 - (remainingTimeMs / totalDayTimeMs) * 100;
       setTimeProgress(Math.min(100, Math.max(0, progress)));
 
-// Если день закончился, удаляем выполненные задачи и сбрасываем статус дэйликов
+      // Если день закончился, удаляем выполненные задачи и сбрасываем статус дэйликов
       if (progress >= 100) {
         setColumns(prevColumns =>
           prevColumns.map(column => ({
@@ -153,7 +155,7 @@ export default function TasksContainer() {
   };
 
   // Добавление задачи
-const handleAddNewTask = (taskText: string, columnType: 'short' | 'medium' | 'long' | 'daily', deadline: Date) => {
+  const handleAddNewTask = (taskText: string, columnType: 'short' | 'medium' | 'long' | 'daily', deadline: Date) => {
     console.log('➕ Adding new task:', { taskText, columnType, deadline });
 
     const newTask: Task = {
@@ -170,6 +172,17 @@ const handleAddNewTask = (taskText: string, columnType: 'short' | 'medium' | 'lo
           : column
       )
     );
+
+    const oldTasksProgress = JSON.parse(localStorage.getItem('tasksProgress') || '[]') as TaskProgress[] | [];
+
+    localStorage.setItem('tasksProgress', JSON.stringify([
+      ...oldTasksProgress, {
+        id: newTask.id,
+        progress: 0
+      }
+    ]))
+
+    localStorage.setItem(`taskCreatedAt_${newTask.id}`, new Date().toISOString())
   };
 
   // Удаление задачи

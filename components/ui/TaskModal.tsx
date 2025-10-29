@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import DatePicker from 'react-datepicker';
 import CustomSelect from './CustomSelect';
+import { TaskColumnData } from '../../lib/types';
 
 interface TaskModalProps {
   isOpen: boolean;
@@ -11,7 +12,7 @@ interface TaskModalProps {
 export default function TaskModal({ isOpen, onClose, onAddTask }: TaskModalProps) {
   const [taskText, setTaskText] = useState('');
   const [deadline, setDeadline] = useState<Date | null>(null);
-const [columnType, setColumnType] = useState<'short' | 'medium' | 'long' | 'daily'>('short');
+  const [columnType, setColumnType] = useState<'short' | 'medium' | 'long' | 'daily'>('short');
 
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -25,7 +26,8 @@ const [columnType, setColumnType] = useState<'short' | 'medium' | 'long' | 'dail
       setColumnType('short');
       onClose();
     }
-  };
+  };  
+  
 
   if (!isOpen) return null;
 
@@ -55,7 +57,7 @@ const [columnType, setColumnType] = useState<'short' | 'medium' | 'long' | 'dail
               <label htmlFor="columnType" className="block text-sm font-medium text-gray-300 mb-1">
                 Колонка
               </label>
-<CustomSelect
+              <CustomSelect
                 value={columnType}
                 onChange={(value) => setColumnType(value as 'short' | 'medium' | 'long' | 'daily')}
                 options={[
@@ -86,6 +88,37 @@ const [columnType, setColumnType] = useState<'short' | 'medium' | 'long' | 'dail
                 popperPlacement="bottom-start"
                 placeholderText="Выберите дату и время"
                 required
+                minDate={new Date()}
+                filterTime={(time) => {
+                  const now = new Date();
+                  const selectedDate = deadline || new Date();
+
+                  // Check if the time is in the past (including hours and minutes)
+                  const selectedDateTime = new Date(selectedDate);
+                  selectedDateTime.setHours(time.getHours(), time.getMinutes(), 0, 0);
+
+                  if (selectedDateTime < now) {
+                    return false;
+                  }
+
+                  // Get all tasks from localStorage
+                  const savedData = localStorage.getItem('todoTasks');
+                  if (!savedData) return true;
+
+                  const parsedData: { columns: TaskColumnData[] } = JSON.parse(savedData);
+                  const allTasks = parsedData.columns.flatMap(col => col.tasks);
+
+                  // Check if any task has the same time slot
+                  return !allTasks.some(task => {
+                    const taskDeadline = new Date(task.deadline);
+                    // Compare both date and time (hours/minutes)
+                    return taskDeadline.getFullYear() === selectedDateTime.getFullYear() &&
+                           taskDeadline.getMonth() === selectedDateTime.getMonth() &&
+                           taskDeadline.getDate() === selectedDateTime.getDate() &&
+                           taskDeadline.getHours() === selectedDateTime.getHours() &&
+                           taskDeadline.getMinutes() === selectedDateTime.getMinutes();
+                  });
+                }}
               />
             </div>
 

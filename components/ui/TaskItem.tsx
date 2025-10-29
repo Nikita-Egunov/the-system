@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { DoubleClickCheckbox } from '@/lib/ui/DoubleClickCheckbox';
+import { TaskProgress } from '@/lib/types';
 
 interface TaskItemProps {
   id: string;
@@ -20,19 +21,30 @@ export default function TaskItem({ id, text, status, setStatus, deadline }: Task
 
   // Загружаем сохраненный прогресс из localStorage при монтировании
   useEffect(() => {
-    const savedProgress = JSON.parse(localStorage.getItem('tasksProgress') || '{}');
-    if (savedProgress[id]) {
+    const savedProgress = JSON.parse(localStorage.getItem('tasksProgress') || '[]') as TaskProgress[] | [];
+
+    const taskProgress = savedProgress.filter((task) => task.id === id) as TaskProgress[] | undefined;
+
+    if (taskProgress) {
       requestAnimationFrame(() => {
-        setProgress(savedProgress[id]);
+        setProgress(taskProgress[0].progress);
+        console.log('taskProgress[0].progress:', taskProgress[0].progress);
       });
     }
   }, [id]);
+
+  useEffect(() => {
+    console.log('progress:', progress);
+  }, [progress]);
 
   function getTaskDate(deadline: Date) {
     const now = new Date();
     const deadlineDate = new Date(deadline);
 
     const createdAt = new Date(localStorage.getItem(`taskCreatedAt_${id}`) as string)
+
+    console.log('createdAt:', createdAt);
+
 
     const totalTime = deadlineDate.getTime() - createdAt.getTime();
     const elapsedTime = now.getTime() - createdAt.getTime();
@@ -62,9 +74,13 @@ export default function TaskItem({ id, text, status, setStatus, deadline }: Task
       // Рассчитываем общее время и оставшееся время
       const totalTime = taskDates.totalTime
       const remainingTime = deadlineDate.getTime() - taskDates.now.getTime();
+      console.log(`totalTime: ${totalTime} && remainingTime: ${remainingTime}`);
+
 
       // Рассчитываем прогресс (чем меньше времени осталось, тем больше прогресс)
-      const progressPercentage = Math.round((remainingTime / totalTime) * 100);
+      const progressPercentage = (remainingTime / totalTime) * 100;
+      console.log('progressPercentage:', progressPercentage);
+
       return Math.min(Math.max(progressPercentage, 0), 100);
     };
 
@@ -139,7 +155,7 @@ export default function TaskItem({ id, text, status, setStatus, deadline }: Task
     console.log('getProgressBarColor called');
     if (progress === 0) {
       return 'bg-red-500'; // Красный - время вышло
-    } else if (progress < 30) {
+    } else if (progress > 70) {
       return 'bg-green-500'; // Зеленый - много времени
     } else if (progress >= 30 && progress <= 70) {
       return 'bg-yellow-500'; // Желтый - среднее время
@@ -152,7 +168,7 @@ export default function TaskItem({ id, text, status, setStatus, deadline }: Task
     console.log('getProgressBarColor called');
     if (progress === 0) {
       return 'bg-red-500/20'; // Красный - время вышло
-    } else if (progress < 30) {
+    } else if (progress > 70) {
       return 'bg-green-500/20'; // Зеленый - много времени
     } else if (progress >= 30 && progress <= 70) {
       return 'bg-yellow-500/20'; // Желтый - среднее время
@@ -192,7 +208,7 @@ export default function TaskItem({ id, text, status, setStatus, deadline }: Task
           onClick={handleClick}
         >
           {status !== 'done' &&
-            <div className={`absolute top-0 right-0 px-2 py-1 rounded-bl-lg text-xs text-gray-200 bg-gray-400/20`}>
+            <div className={`absolute top-0 right-0 px-2 py-1 rounded-bl-lg text-xs text-gray-200 bg-gray-400/20 ${getTimerBarColor()}`}>
               {timeLeft}
             </div>
           }
@@ -210,14 +226,14 @@ export default function TaskItem({ id, text, status, setStatus, deadline }: Task
             )} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
-            {/* {(status !== 'done' && progress > 0) && (
+            {(status !== 'done' && progress > 0) && (
               <div className="bg-gray-700 rounded-full overflow-hidden absolute bottom-0 left-0 w-full">
                 <div
                   className={`h-1 rounded-full transition-all duration-500 ease-out ${getProgressBarColor()}`}
                   style={{ width: `${progress}%` }}
                 ></div>
               </div>
-            )} */}
+            )}
           </div>
         </label>
       </motion.li>
