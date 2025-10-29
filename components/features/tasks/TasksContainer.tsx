@@ -357,6 +357,14 @@ export default function TasksContainer() {
       : 0;
     return { totalShortTasks, completedShortTasks };
   };
+  const getDailyTasksStats = () => {
+    const shortColumn = columns.find(col => col.type === 'daily');
+    const totalDailyTasks = shortColumn ? shortColumn.tasks.length : 0;
+    const completedDailyTasks = shortColumn
+      ? shortColumn.tasks.filter(task => task.status === 'done').length
+      : 0;
+    return { totalDailyTasks, completedDailyTasks };
+  };
 
   // Получение статистики по просроченным задачам
   const getOverdueTasksStats = () => {
@@ -414,6 +422,8 @@ export default function TasksContainer() {
           completedTasks={getTasksStats().completedTasks}
           totalShortTasks={getShortTasksStats().totalShortTasks}
           completedShortTasks={getShortTasksStats().completedShortTasks}
+          totalDailyTasks={getDailyTasksStats().totalDailyTasks}
+          completedDailyTasks={getDailyTasksStats().completedDailyTasks}
           totalOverdueTasks={getOverdueTasksStats().totalTasks}
           overdueTasks={getOverdueTasksStats().overdueTasks}
           className="mb-6"

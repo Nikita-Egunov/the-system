@@ -44,8 +44,14 @@ export default function TaskModal({ isOpen, onClose, onAddTask }: TaskModalProps
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-gray-800 rounded-xl shadow-xl w-full max-w-md">
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50"
+      onClick={onClose}
+    >
+      <div
+        className="bg-gray-800 rounded-xl shadow-xl w-full max-w-md"
+        onClick={e => e.stopPropagation()}
+      >
         <div className="p-6">
           <h2 className="text-xl font-semibold text-indigo-200 mb-4">Добавить новую задачу</h2>
 

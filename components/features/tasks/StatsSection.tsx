@@ -6,12 +6,14 @@ interface StatsSectionProps {
   completedTasks: number;
   totalShortTasks?: number;
   completedShortTasks?: number;
+  totalDailyTasks?: number;
+  completedDailyTasks?: number;
   totalOverdueTasks?: number;
   overdueTasks?: number;
   className?: string;
 }
 
-export default function StatsSection({ totalTasks, completedTasks, totalShortTasks, completedShortTasks, totalOverdueTasks, overdueTasks, className = '' }: StatsSectionProps) {
+export default function StatsSection({ totalTasks, completedTasks, totalShortTasks, completedShortTasks, totalOverdueTasks, overdueTasks, completedDailyTasks, totalDailyTasks, className = '' }: StatsSectionProps) {
   const [timeProgress, setTimeProgress] = useState(0);
   const [remainingTime, setRemainingTime] = useState(0);
   const [yearProgress, setYearProgress] = useState(0);
@@ -86,11 +88,14 @@ export default function StatsSection({ totalTasks, completedTasks, totalShortTas
     ? Math.round((completedShortTasks! / totalShortTasks) * 100)
     : 0;
 
-  // Рассчитываем прогресс задач для дэйликов
-  const dailyProgress = totalTasks > 0
+  // Рассчитываем прогресс задач для всех задач
+  const allProgress = totalTasks > 0
     ? Math.round((completedTasks / totalTasks) * 100)
     : 0;
 
+  const dailyProgress = totalDailyTasks && totalDailyTasks > 0 && completedDailyTasks
+    ? Math.round((totalDailyTasks / completedDailyTasks) * 100)
+    : 0;
   return (
     <div className={`bg-gray-800 rounded-2xl p-6 shadow-lg ${className}`}>
       <h2 className="text-xl font-semibold text-gray-100 mb-6">Статистика</h2>
@@ -141,7 +146,7 @@ export default function StatsSection({ totalTasks, completedTasks, totalShortTas
                 strokeWidth: 4
               },
               {
-                value: totalShortTasks && totalShortTasks > 0 ? (completedShortTasks! / totalShortTasks) * 100 : 0,
+                value: allProgress,
                 color: "#f59e0b", // yellow-500
                 strokeWidth: 3
               },
@@ -157,7 +162,7 @@ export default function StatsSection({ totalTasks, completedTasks, totalShortTas
           <div className="mt-4 text-center">
             <h3 className="text-gray-300 font-medium">Задачи</h3>
             <p className="text-gray-400 text-sm">
-              {completedShortTasks} из {totalShortTasks} выполнено
+              {completedTasks} из {totalTasks} выполнено
             </p>
           </div>
         </div>
