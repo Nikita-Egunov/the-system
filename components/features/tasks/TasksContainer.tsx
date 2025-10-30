@@ -138,7 +138,7 @@ export default function TasksContainer() {
       setDataCheck(true)
 
       // Если это первый запуск или день изменился
-      if (!lastCheckDate || new Date(now.getDate()).getDate() !== now.getDate()) {
+      if (!lastCheckDate || new Date(lastCheckDate).getDate() !== now.getDate()) {
         // Сохраняем текущую дату для следующей проверки
         localStorage.setItem('lastCheckDate', now.toISOString());
       }
@@ -153,8 +153,9 @@ export default function TasksContainer() {
 
   useEffect(() => {
     const now = new Date();
+    const lastCheckDate = localStorage.getItem('lastCheckDate');
 
-    if (new Date().getDate() !== now.getDate() && dataCheck) {
+    if (!lastCheckDate || new Date(lastCheckDate).getDate() !== now.getDate() && dataCheck) {
       // Сбрасываем статус дэйликов и удаляем выполненные задачи
 
       // ошибочное срабатывание линта
@@ -166,7 +167,7 @@ export default function TasksContainer() {
             ? column.tasks.map(task => ({ ...task, status: 'idle' }))
             : column.tasks.filter(task => task.status !== 'done')
         }))
-      );        
+      );
     }
   }, [dataCheck])
 
