@@ -61,7 +61,7 @@
     @apply text-gray-200! rounded! transition-colors!;
   }
 
-  .react-datepicker__day:hover {
+  .react-datepicker__day:not(.react-datepicker__day--disabled):hover {
     @apply bg-gray-600! text-white!;
   }
 
@@ -112,8 +112,15 @@
     @apply text-gray-200! transition-colors!;
   }
 
-  .react-datepicker__time-list-item:hover {
+  .react-datepicker__time-list-item:not(.react-datepicker__time--disabled):hover {
     @apply bg-gray-700!;
+  }
+
+  .react-datepicker__time--disabled {
+    @apply bg-red-500/20!;
+  }
+  .react-datepicker__day--disabled {
+    @apply bg-red-500/20!;
   }
 
   .react-datepicker__time-list-item--selected {

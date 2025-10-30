@@ -93,7 +93,7 @@ export default function TaskModal({ isOpen, onClose, onAddTask }: TaskModalProps
                 <label className="block text-sm font-medium text-gray-300 mb-1">
                   Срок выполнения
                 </label>
-                <DatePicker
+<DatePicker
                   selected={deadline}
                   onChange={(date: Date | null) => setDeadline(date)}
                   showTimeSelect
@@ -128,7 +128,7 @@ export default function TaskModal({ isOpen, onClose, onAddTask }: TaskModalProps
                     const allTasks = parsedData.columns.flatMap(col => col.tasks);
 
                     // Check if any task has the same time slot
-                    return !allTasks.some(task => {
+                    const isTimeSlotTaken = allTasks.some(task => {
                       const taskDeadline = new Date(task.deadline);
                       // Compare both date and time (hours/minutes)
                       return taskDeadline.getFullYear() === selectedDateTime.getFullYear() &&
@@ -137,6 +137,56 @@ export default function TaskModal({ isOpen, onClose, onAddTask }: TaskModalProps
                         taskDeadline.getHours() === selectedDateTime.getHours() &&
                         taskDeadline.getMinutes() === selectedDateTime.getMinutes();
                     });
+
+                    return !isTimeSlotTaken;
+                  }}
+                  dayClassName={(date) => {
+                    const now = new Date();
+                    if (date < now) {
+                      return 'react-datepicker__day--disabled';
+                    }
+
+                    const savedData = localStorage.getItem('todoTasks');
+                    if (!savedData) return '';
+
+                    const parsedData: { columns: TaskColumnData[] } = JSON.parse(savedData);
+                    const allTasks = parsedData.columns.flatMap(col => col.tasks);
+
+                    const isDateTaken = allTasks.some(task => {
+                      const taskDeadline = new Date(task.deadline);
+                      return taskDeadline.getFullYear() === date.getFullYear() &&
+                        taskDeadline.getMonth() === date.getMonth() &&
+                        taskDeadline.getDate() === date.getDate();
+                    });
+
+                    return isDateTaken ? 'react-datepicker__day--disabled' : '';
+                  }}
+                  timeClassName={(time) => {
+                    const now = new Date();
+                    const selectedDate = deadline || new Date();
+                    const selectedDateTime = new Date(selectedDate);
+                    selectedDateTime.setHours(time.getHours(), time.getMinutes(), 0, 0);
+
+                    if (selectedDateTime < now) {
+                      return 'react-datepicker__time--disabled';
+                    }
+
+                    const savedData = localStorage.getItem('todoTasks');
+                    if (!savedData) return '';
+
+                    const parsedData: { columns: TaskColumnData[] } = JSON.parse(savedData);
+                    const allTasks = parsedData.columns.flatMap(col => col.tasks);
+
+                    const isTimeSlotTaken = allTasks.some(task => {
+                      const taskDeadline = new Date(task.deadline);
+                      return taskDeadline.getFullYear() === selectedDateTime.getFullYear() &&
+                        taskDeadline.getMonth() === selectedDateTime.getMonth() &&
+                        taskDeadline.getDate() === selectedDateTime.getDate() &&
+                        taskDeadline.getHours() === selectedDateTime.getHours() &&
+                        taskDeadline.getMinutes() === selectedDateTime.getMinutes();
+                    });
+
+                    return isTimeSlotTaken ? 'react-datepicker__time--disabled' : '';
                   }}
                 />
               </div>

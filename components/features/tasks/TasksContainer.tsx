@@ -52,6 +52,7 @@ export default function TasksContainer() {
   const [deletedTasks, setDeletedTasks] = useState<DeletedTask[]>([]);
   const [tasksProgress, setTasksProgress] = useState<TaskProgress[]>([]);
   const [timeProgress, setTimeProgress] = useState<number>(0);
+  const [dataCheck, setDataCheck] = useState<boolean>(false);
 
   // Загрузка данных при монтировании
   useEffect(() => {
@@ -134,18 +135,10 @@ export default function TasksContainer() {
       const now = new Date();
       const lastCheckDate = localStorage.getItem('lastCheckDate');
 
-      // Если это первый запуск или день изменился
-      if (!lastCheckDate || new Date(lastCheckDate).getDate() !== now.getDate()) {
-        // Сбрасываем статус дэйликов и удаляем выполненные задачи
-        setColumns(prevColumns =>
-          prevColumns.map(column => ({
-            ...column,
-            tasks: column.type === 'daily'
-              ? column.tasks.map(task => ({ ...task, status: 'idle' }))
-              : column.tasks.filter(task => task.status !== 'done')
-          }))
-        );
+      setDataCheck(true)
 
+      // Если это первый запуск или день изменился
+      if (!lastCheckDate || new Date(now.getDate()).getDate() !== now.getDate()) {
         // Сохраняем текущую дату для следующей проверки
         localStorage.setItem('lastCheckDate', now.toISOString());
       }
@@ -157,6 +150,29 @@ export default function TasksContainer() {
     const intervalId = setInterval(updateTimeProgress, 1000);
     return () => clearInterval(intervalId);
   }, []);
+
+  useEffect(() => {
+    const now = new Date();
+
+    if (new Date().getDate() !== now.getDate() && dataCheck) {
+      // Сбрасываем статус дэйликов и удаляем выполненные задачи
+
+      // ошибочное срабатывание линта
+      // eslint-disable-next-line react-hooks/set-state-in-effect 
+      setColumns(prevColumns =>
+        prevColumns.map(column => ({
+          ...column,
+          tasks: column.type === 'daily'
+            ? column.tasks.map(task => ({ ...task, status: 'idle' }))
+            : column.tasks.filter(task => task.status !== 'done')
+        }))
+      );        
+    }
+  }, [dataCheck])
+
+  useEffect(() => {
+    console.log('COLUMNS:', columns);
+  }, [columns])
 
   // Получение оставшегося времени до конца дня
   const getRemainingTime = () => {

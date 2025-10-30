@@ -192,6 +192,11 @@ export default function TaskItem({ id, text, status, setStatus, deadline }: Task
     setStatus(id, newStatus)
   }
 
+  function handleLongPress(event: React.MouseEvent) {
+    event.preventDefault();
+    setStatus(id, 'idle');
+  }
+
   return (
     <AnimatePresence>
       <motion.li
@@ -206,6 +211,7 @@ export default function TaskItem({ id, text, status, setStatus, deadline }: Task
             (status === 'idle') && 'bg-gray-700/50 hover:bg-gray-700'
           )}
           onClick={handleClick}
+          onContextMenu={handleLongPress}
         >
           {status !== 'done' &&
             <div className={`absolute top-0 right-0 px-2 py-1 rounded-bl-lg text-xs text-gray-200 bg-gray-400/20 ${getTimerBarColor()}`}>
