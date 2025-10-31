@@ -195,7 +195,7 @@ export default function TaskModal({ isOpen, onClose, onAddTask }: TaskModalProps
         className="bg-gray-800 rounded-xl shadow-xl w-full max-w-md"
         onClick={e => e.stopPropagation()}
       >
-        <div className="p-6">
+        <div className="p-3 md:p-6">
           <h2 className="text-xl font-semibold text-indigo-200 mb-4">Добавить новую задачу</h2>
 
           <form onSubmit={handleSubmit} noValidate>
