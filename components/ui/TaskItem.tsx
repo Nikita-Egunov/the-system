@@ -28,14 +28,9 @@ export default function TaskItem({ id, text, status, setStatus, deadline }: Task
     if (taskProgress) {
       requestAnimationFrame(() => {
         setProgress(taskProgress[0].progress);
-        console.log('taskProgress[0].progress:', taskProgress[0].progress);
       });
     }
   }, [id]);
-
-  useEffect(() => {
-    console.log('progress:', progress);
-  }, [progress]);
 
   function getTaskDate(deadline: Date) {
     const now = new Date();
@@ -105,7 +100,7 @@ export default function TaskItem({ id, text, status, setStatus, deadline }: Task
       if (updatedProgress === 100) {
         setProgress(0); // Скрываем прогресс бар
       }
-    }, 60000);
+    }, 1000);
 
     return () => clearInterval(progressInterval);
   }, [deadline, id]);
