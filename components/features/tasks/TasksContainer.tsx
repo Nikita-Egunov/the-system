@@ -52,9 +52,13 @@ export default function TasksContainer() {
   const [deletedTasks, setDeletedTasks] = useState<DeletedTask[]>([]);
   const [tasksProgress, setTasksProgress] = useState<TaskProgress[]>([]);
   const [timeProgress, setTimeProgress] = useState<number>(0);
-  const [dataCheck, setDataCheck] = useState<boolean>(false);
+
 
   // Загрузка данных при монтировании
+  // В начале компонента добавьте состояние
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
+
+  // В эффекте загрузки данных
   useEffect(() => {
     const loadInitialData = () => {
       console.log('🔄 Loading data from localStorage...');
@@ -74,7 +78,6 @@ export default function TasksContainer() {
 
     const data = loadInitialData();
 
-    // Используем setTimeout для отложенного обновления состояния
     const timeoutId = setTimeout(() => {
       if (data && data?.columns?.length > 0) {
         console.log('🎯 Setting columns from localStorage');
@@ -85,6 +88,7 @@ export default function TasksContainer() {
         console.log('🎯 Setting default columns');
         setColumns(initialTasks);
       }
+      setIsDataLoaded(true); // ✅ Помечаем что данные загружены
     }, 0);
 
     return () => clearTimeout(timeoutId);
@@ -117,7 +121,6 @@ export default function TasksContainer() {
 
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
-
   // Расчет прогресса времени до конца дня и сброс задач в начале нового дня
   useEffect(() => {
     const updateTimeProgress = () => {
@@ -130,59 +133,66 @@ export default function TasksContainer() {
       setTimeProgress(Math.min(100, Math.max(0, progress)));
     };
 
-    // Проверка на начало нового дня
     const checkForNewDay = () => {
+      // ✅ Важно: проверяем, что данные уже загружены
+      if (!isDataLoaded) {
+        console.log('⏳ Данные еще не загружены, пропускаем проверку нового дня');
+        return false;
+      }
+
       const now = new Date();
       const lastCheckDate = localStorage.getItem('lastCheckDate');
+      const today = now.toDateString();
 
-      setDataCheck(true)
+      if (!lastCheckDate || new Date(lastCheckDate).toDateString() !== today) {
+        console.log('🔄 Обнаружен новый день! Сбрасываем задачи...');
 
-      // Если это первый запуск или день изменился
-      if (!lastCheckDate || new Date(lastCheckDate).getDate() !== now.getDate()) {
-        // Сохраняем текущую дату для следующей проверки
+        // Сохраняем текущую дату
         localStorage.setItem('lastCheckDate', now.toISOString());
+
+        // Сбрасываем задачи
+        const endOfDay = new Date();
+        endOfDay.setHours(23, 59, 59, 999);
+
+        setColumns(prevColumns =>
+          prevColumns.map(column => ({
+            ...column,
+            tasks: column.type === 'daily'
+              ? column.tasks.map(task => ({ ...task, status: 'idle', deadline: endOfDay }))
+              : column.tasks.filter(task => task.status !== 'done')
+          }))
+        );
+
+        return true;
       }
+      return false;
     };
 
+    // Первоначальный запуск
     updateTimeProgress();
-    checkForNewDay();
 
-    const intervalId = setInterval(updateTimeProgress, 1000);
-    return () => clearInterval(intervalId);
-  }, []);
-
-  useEffect(() => {
-    const now = new Date();
-    const lastCheckDate = localStorage.getItem('lastCheckDate');
-
-    if (!lastCheckDate || new Date(lastCheckDate).getDate() !== now.getDate() && dataCheck) {
-      // Сбрасываем статус дэйликов и удаляем выполненные задачи
-
-      // ошибочное срабатывание линта
-      // eslint-disable-next-line react-hooks/set-state-in-effect 
-      setColumns(prevColumns =>
-        prevColumns.map(column => ({
-          ...column,
-          tasks: column.type === 'daily'
-            ? column.tasks.map(task => ({ ...task, status: 'idle' }))
-            : column.tasks.filter(task => task.status !== 'done')
-        }))
-      );
+    // ✅ Проверяем новый день только если данные загружены
+    if (isDataLoaded) {
+      checkForNewDay();
     }
-  }, [dataCheck])
+
+    // Интервал для прогресса времени (каждую секунду)
+    const progressIntervalId = setInterval(updateTimeProgress, 1000);
+
+    // Интервал для проверки нового дня (каждую минуту)
+    const newDayIntervalId = setInterval(checkForNewDay, 60000);
+
+    return () => {
+      clearInterval(progressIntervalId);
+      clearInterval(newDayIntervalId);
+    };
+  }, [isDataLoaded]); // ✅ Добавляем зависимость от isDataLoaded
 
   useEffect(() => {
     console.log('COLUMNS:', columns);
   }, [columns])
 
   // Получение оставшегося времени до конца дня
-  const getRemainingTime = () => {
-    const now = new Date();
-    const endOfDay = new Date(now);
-    endOfDay.setHours(23, 59, 59, 999);
-    const remainingTimeMs = endOfDay.getTime() - now.getTime();
-    return formatTime(remainingTimeMs);
-  };
 
   // Добавление задачи
   const handleAddNewTask = (taskText: string, columnType: 'short' | 'medium' | 'long' | 'daily', deadline: Date) => {
@@ -231,34 +241,6 @@ export default function TasksContainer() {
   };
 
   // Удаление задачи
-  const handleDeleteTask = (taskId: string, columnId: string) => {
-    console.log('🗑️ Deleting task:', { taskId, columnId });
-
-    setColumns(prevColumns =>
-      prevColumns.map(column => {
-        if (column.id === columnId) {
-          const deletedTask = column.tasks.find(task => task.id === taskId);
-          if (deletedTask) {
-            // Добавляем в архив удаленных
-            const newDeletedTask: DeletedTask = {
-              id: deletedTask.id,
-              text: deletedTask.text,
-              columnType: column.type,
-              deletedAt: new Date().toISOString(),
-              deadline: deletedTask.deadline || new Date()
-            };
-            setDeletedTasks(prev => [...prev, newDeletedTask]);
-          }
-
-          return {
-            ...column,
-            tasks: column.tasks.filter(task => task.id !== taskId)
-          };
-        }
-        return column;
-      })
-    );
-  };
 
   // Изменение статуса задачи
   const handleTaskStateChange = (taskId: string, newStatus: Task['status'], columnId: string) => {
@@ -398,28 +380,7 @@ export default function TasksContainer() {
     setIsModalOpen(true);
   };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-  };
 
-  function getDayProgress() {
-    if (timeProgress < 50) {
-      return 'bg-red-500';
-    } else if (timeProgress < 80) {
-      return 'bg-yellow-500';
-    } else {
-      return 'bg-green-500';
-    }
-  }
-  function getDayTimerProgress() {
-    if (timeProgress < 50) {
-      return 'text-red-500';
-    } else if (timeProgress < 80) {
-      return 'text-yellow-500';
-    } else {
-      return 'text-green-500';
-    }
-  }
 
   return (
     <div className="relative">
@@ -492,6 +453,26 @@ export default function TasksContainer() {
         onClose={() => setIsModalOpen(false)}
         onAddTask={handleAddNewTask}
       />
+
+      {process.env.NODE_ENV === 'development' && (
+        <button
+          className='p-3.5 bg-green-600/20 border border-green-600 hover:bg-green-600/30 cursor-pointer rounded-2xl mt-7'
+          onClick={() => {
+            const endOfDay = new Date();
+            endOfDay.setHours(23, 59, 59, 999);
+            setColumns(prevColumns =>
+              prevColumns.map(column => ({
+                ...column,
+                tasks: column.type === 'daily'
+                  ? column.tasks.map(task => ({ ...task, status: 'idle', deadline: endOfDay }))
+                  : column.tasks.filter(task => task.status !== 'done')
+              }))
+            );
+          }}
+        >
+          Set day
+        </button>
+      )}
     </div>
   );
 }
